@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="gu" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>અપેક્ષા AI (Apexa) — Next-Gen Personal AI OS</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Gujarati:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg-void: #030712;
+      --accent-cyan: #22d3ee;
+      --accent-violet: #a855f7;
+      --accent-emerald: #10b981;
+    }
+
+    body {
+      font-family: 'Inter', 'Noto Sans Gujarati', 'Noto Sans Devanagari', sans-serif;
+      background-color: var(--bg-void);
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -15%, rgba(34, 211, 238, 0.16), transparent),
+        radial-gradient(ellipse 60% 45% at 85% 15%, rgba(168, 85, 247, 0.12), transparent),
+        radial-gradient(ellipse 50% 40% at 15% 85%, rgba(16, 185, 129, 0.08), transparent);
+      color: #f1f5f9;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .hud-grid {
+      background-image:
+        linear-gradient(rgba(34, 211, 238, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 211, 238, 0.03) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+
+    .glass-panel {
+      background: linear-gradient(155deg, rgba(15, 23, 42, 0.78) 0%, rgba(7, 11, 22, 0.88) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .glass-panel-glow {
+      border-color: rgba(34, 211, 238, 0.28);
+      box-shadow: 0 0 40px -14px rgba(34, 211, 238, 0.25), inset 0 1px 0 rgba(34, 211, 238, 0.15);
+    }
+
+    .orb-core {
+      position: relative;
+      width: 112px;
+      height: 112px;
+      border-radius: 9999px;
+      background: radial-gradient(circle at 32% 30%, #67e8f9 0%, #06b6d4 38%, #4f46e5 78%, #0f172a 100%);
+      box-shadow: 0 0 45px rgba(34, 211, 238, 0.55), 0 0 90px rgba(99, 102, 241, 0.28), inset 0 0 24px rgba(255, 255, 255, 0.38);
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease;
+    }
+
+    .orb-core:hover {
+      transform: scale(1.06);
+      box-shadow: 0 0 60px rgba(34, 211, 238, 0.78), 0 0 110px rgba(168, 85, 247, 0.35), inset 0 0 30px rgba(255, 255, 255, 0.45);
+    }
+
+    .orb-listening {
+      animation: orbBreath 1.2s infinite ease-in-out;
+      background: radial-gradient(circle at 32% 30%, #6ee7b7 0%, #10b981 45%, #047857 82%, #022c22 100%);
+      box-shadow: 0 0 64px rgba(16, 185, 129, 0.8), 0 0 110px rgba(52, 211, 153, 0.35), inset 0 0 30px rgba(255, 255, 255, 0.45);
+    }
+
+    .orb-thinking {
+      animation: orbThink 1.5s infinite linear;
+      background: radial-gradient(circle at 32% 30%, #e879f9 0%, #a855f7 45%, #4f46e5 82%, #1e1b4b 100%);
+      box-shadow: 0 0 64px rgba(168, 85, 247, 0.8), 0 0 110px rgba(232, 121, 249, 0.35);
+    }
+
+    @keyframes orbBreath {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    @keyframes orbThink {
+      0% { transform: scale(1); filter: hue-rotate(0deg); }
+      50% { transform: scale(1.06); filter: hue-rotate(24deg); }
+      100% { transform: scale(1); filter: hue-rotate(0deg); }
+    }
+
+    .gradient-text {
+      background: linear-gradient(90deg, #67e8f9 0%, #a5b4fc 50%, #f0abfc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar { width: 5px; height: 5px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.25); border-radius: 999px; }
+  </style>
+  <meta name="theme-color" content="#030712" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <link rel="icon" type="image/png" href="./icon-192.png" />
+</head>
+<body class="hud-grid antialiased selection:bg-cyan-500/30 selection:text-cyan-100">
+
+  <!-- Toast Container -->
+  <div id="toast-box" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-xs pointer-events-none"></div>
+
+  <!-- Top Futuristic HUD Header -->
+  <header class="sticky top-0 z-30 glass-panel border-x-0 border-t-0 border-b border-cyan-500/20">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand Identity -->
+      <div class="flex items-center gap-3">
+        <div class="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-400 via-indigo-500 to-fuchsia-500 p-[1.5px] shadow-lg shadow-cyan-500/25">
+          <div class="w-full h-full rounded-[14px] bg-slate-950 flex items-center justify-center">
+            <i data-lucide="sparkles" class="w-5 h-5 text-cyan-300"></i>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 id="header-ai-name" class="text-base sm:text-lg font-extrabold tracking-tight gradient-text leading-tight">અપેક્ષા AI</h1>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30">
+              OS v2.0
+            </span>
+          </div>
+          <div class="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+            <span id="brain-badge" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+              <span id="brain-badge-text">સ્માર્ટ ડેમો મોડ</span>
+            </span>
+            <span id="live-clock" class="hidden md:inline text-slate-500 font-mono"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Controls: God Mode + Language + Voice -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <button type="button" id="godmode-toggle-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition">
+          <i data-lucide="flame" class="w-3.5 h-3.5"></i>
+          <span id="godmode-label">Deep Think: ON</span>
+        </button>
+
+        <div class="inline-flex rounded-xl bg-slate-950/90 p-1 border border-slate-800 text-xs font-medium">
+          <button type="button" data-lang="gu" class="lang-btn px-2.5 py-1 rounded-lg transition">ગુજરાતી</button>
+          <button type="button" data-lang="hi" class="lang-btn px-2.5 py-1 rounded-lg transition">हिन्दी</button>
+          <button type="button" data-lang="en" class="lang-btn px-2.5 py-1 rounded-lg transition">English</button>
+        </div>
+
+        <button type="button" id="tts-toggle-btn" class="p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-cyan-300 transition" title="Voice Reply">
+          <i data-lucide="volume-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sleek Pill Navigation -->
+    <nav class="max-w-7xl mx-auto px-4 pb-2.5 flex items-center gap-1.5 overflow-x-auto scrollbar-thin">
+      <button type="button" data-tab="hub" class="tab-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition">
+        <i data-lucide="mic" class="w-4 h-4"></i> <span data-i18n="tabHub">વૉઇસ & ચેટ</span>
+      </button>
+      <button type="button" data-tab="whatsapp" class="tab-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition">
+        <i data-lucide="message-circle" class="w-4 h-4"></i> <span data-i18n="tabWhatsApp">WhatsApp</span>
+      </button>
+      <button type="button" data-tab="sheets" class="tab-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition">
+        <i data-lucide="table" class="w-4 h-4"></i> <span data-i18n="tabSheets">ગૂગલ શીટ & ડેટા</span>
+      </button>
+      <button type="button" data-tab="memory" class="tab-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition">
+        <i data-lucide="brain" class="w-4 h-4"></i> <span data-i18n="tabMemory">મેમરી</span>
+      </button>
+      <button type="button" data-tab="settings" class="tab-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition">
+        <i data-lucide="settings" class="w-4 h-4"></i> <span data-i18n="tabSettings">સેટિંગ્સ</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-5">
+
+    <!-- TAB 1: VOICE & CHAT HUB -->
+    <section id="view-hub" class="tab-view grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <!-- Left Column: Neural Hologram Orb + PC Command Deck -->
+      <div class="lg:col-span-4 flex flex-col gap-4">
+        <div class="glass-panel glass-panel-glow rounded-3xl p-5 flex flex-col items-center text-center relative overflow-hidden">
+          <div class="w-full flex items-center justify-between text-[11px] font-semibold tracking-wider uppercase mb-2">
+            <span class="text-cyan-400 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+              NEURAL CORE
+            </span>
+            <span id="wake-word-pill" class="px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-200 border border-cyan-500/30 font-semibold normal-case">"હે અપેક્ષા"</span>
+          </div>
+
+          <!-- Interactive Canvas + Orb -->
+          <div class="relative w-52 h-52 flex items-center justify-center my-1">
+            <canvas id="neural-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+            <button type="button" id="orb-btn" class="orb-core z-10 flex items-center justify-center cursor-pointer focus:outline-none">
+              <i data-lucide="mic" id="orb-icon" class="w-10 h-10 text-white drop-shadow-md"></i>
+            </button>
+          </div>
+
+          <div id="orb-status-label" class="text-xs font-bold tracking-wider uppercase text-cyan-300 mt-1">બોલવા માટે ટૅપ કરો</div>
+          <p id="orb-hint" class="mt-2 text-xs text-slate-400 max-w-xs leading-relaxed">
+            અપેક્ષા સાથે ગુજરાતી, હિન્દી કે English માં વાત કરો — બિઝનેસ ડેટા, WhatsApp મેસેજ કે PC કમાન્ડ આપો.
+          </p>
+
+          <!-- Telemetry Strip -->
+          <div class="w-full grid grid-cols-3 gap-2 mt-4 pt-3.5 border-t border-slate-800/80 text-center">
+            <div class="rounded-xl bg-slate-950/60 py-2 px-1 border border-slate-800/70">
+              <div class="text-[10px] text-slate-500 uppercase">મેમરી</div>
+              <div id="hud-mem-stat" class="text-sm font-bold text-fuchsia-300">1</div>
+            </div>
+            <div class="rounded-xl bg-slate-950/60 py-2 px-1 border border-slate-800/70">
+              <div class="text-[10px] text-slate-500 uppercase">શીટ રો</div>
+              <div id="hud-sheet-stat" class="text-sm font-bold text-cyan-300">4</div>
+            </div>
+            <div class="rounded-xl bg-slate-950/60 py-2 px-1 border border-slate-800/70">
+              <div class="text-[10px] text-slate-500 uppercase">મોડ</div>
+              <div id="hud-mode-stat" class="text-sm font-bold text-emerald-300">3 ભાષા</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PC Quick Launch Deck -->
+        <div class="glass-panel rounded-3xl p-4">
+          <div class="text-xs font-semibold text-slate-300 mb-3 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="terminal" class="w-3.5 h-3.5 text-fuchsia-400"></i>
+              <span data-i18n="pcDeckTitle">PC & બિઝનેસ ક્વિક એક્શન</span>
+            </span>
+            <span class="text-[10px] text-slate-500">1-Tap</span>
+          </div>
+          <div class="grid grid-cols-4 gap-2 mb-3">
+            <button type="button" data-pc-cmd="PC માં Excel ખોલો" class="pc-quick-btn flex flex-col items-center gap-1 p-2.5 rounded-2xl bg-slate-900/90 hover:bg-emerald-500/15 border border-slate-800 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-300 transition">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+              <span class="text-[10px] font-medium">Excel</span>
+            </button>
+            <button type="button" data-pc-cmd="WhatsApp પેમેન્ટ રિમાઇન્ડર બનાવો" class="pc-quick-btn flex flex-col items-center gap-1 p-2.5 rounded-2xl bg-slate-900/90 hover:bg-cyan-500/15 border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-cyan-300 transition">
+              <i data-lucide="message-square" class="w-4 h-4"></i>
+              <span class="text-[10px] font-medium">WhatsApp</span>
+            </button>
+            <button type="button" data-pc-cmd="આજનો બિઝનેસ ડેટા ચેક કરો" class="pc-quick-btn flex flex-col items-center gap-1 p-2.5 rounded-2xl bg-slate-900/90 hover:bg-indigo-500/15 border border-slate-800 hover:border-indigo-500/40 text-slate-300 hover:text-indigo-300 transition">
+              <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+              <span class="text-[10px] font-medium">ડેટા</span>
+            </button>
+            <button type="button" data-pc-cmd="PC માં ફાઇલો શોધો" class="pc-quick-btn flex flex-col items-center gap-1 p-2.5 rounded-2xl bg-slate-900/90 hover:bg-fuchsia-500/15 border border-slate-800 hover:border-fuchsia-500/40 text-slate-300 hover:text-fuchsia-300 transition">
+              <i data-lucide="folder-search" class="w-4 h-4"></i>
+              <span class="text-[10px] font-medium">ફાઇલ્સ</span>
+            </button>
+          </div>
+
+          <div class="text-[11px] font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
+            <i data-lucide="zap" class="w-3.5 h-3.5 text-cyan-400"></i>
+            <span data-i18n="quickCmdsTitle">ઝડપી કમાન્ડ્સ</span>
+          </div>
+          <div id="quick-cmds-list" class="flex flex-wrap gap-1.5"></div>
+        </div>
+      </div>
+
+      <!-- Right Column: Futuristic Chat Console -->
+      <div class="lg:col-span-8 glass-panel rounded-3xl flex flex-col h-[590px] overflow-hidden">
+        <div class="px-5 py-3.5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/80"></span>
+            <span id="console-title" class="text-sm font-bold text-white" data-i18n="chatTitle">અપેક્ષા AI કન્સોલ</span>
+          </div>
+          <button type="button" id="clear-chat-btn" class="text-xs text-slate-400 hover:text-rose-400 flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-slate-800/70 transition">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> <span data-i18n="clearBtn">સાફ કરો</span>
+          </button>
+        </div>
+
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-5 space-y-3.5 scrollbar-thin"></div>
+
+        <!-- Thinking Indicator Bar -->
+        <div id="thinking-bar" class="hidden px-5 py-2 bg-fuchsia-500/10 border-t border-fuchsia-500/20 text-xs text-fuchsia-200 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-fuchsia-400 animate-ping"></span>
+          <span id="thinking-bar-text">અપેક્ષા Deep Think એનાલિસિસ કરી રહી છે...</span>
+        </div>
+
+        <form id="chat-form" class="p-3.5 border-t border-slate-800/80 bg-slate-950/50 flex items-center gap-2.5">
+          <input id="chat-input" type="text" autocomplete="off"
+            placeholder="અપેક્ષાને અહીં લખો અથવા માઇક પર ક્લિક કરો..."
+            class="flex-1 bg-slate-900/90 border border-slate-700/80 rounded-2xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition" />
+          <button type="submit" class="px-5 py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-500 hover:from-cyan-300 hover:to-indigo-400 text-slate-950 font-bold text-sm flex items-center gap-1.5 shadow-lg shadow-cyan-500/20 transition">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            <span data-i18n="sendBtn">મોકલો</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 2: WHATSAPP & WHATSAPP BUSINESS -->
+    <section id="view-whatsapp" class="tab-view hidden grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div class="lg:col-span-5 glass-panel rounded-3xl p-5 flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i>
+            <span data-i18n="waContactsTitle">ઝડપી કોન્ટેક્ટ્સ</span>
+          </h2>
+          <button type="button" id="toggle-add-contact" class="text-xs px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition font-semibold">
+            + નવું ઉમેરો
+          </button>
+        </div>
+
+        <form id="add-contact-form" class="hidden bg-slate-950/80 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+          <input id="new-contact-name" type="text" required placeholder="નામ (દા.ત. રમેશભાઈ પટેલ)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-400 focus:outline-none" />
+          <input id="new-contact-phone" type="tel" required placeholder="મોબાઇલ નંબર (દા.ત. 919876543210)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-400 focus:outline-none" />
+          <div class="flex justify-end gap-2">
+            <button type="button" id="cancel-add-contact" class="px-3 py-1.5 text-xs rounded-xl bg-slate-800 text-slate-300">રદ કરો</button>
+            <button type="submit" class="px-3.5 py-1.5 text-xs rounded-xl bg-emerald-500 text-slate-950 font-bold">સેવ કરો</button>
+          </div>
+        </form>
+
+        <div id="contacts-list" class="space-y-2 max-h-80 overflow-y-auto scrollbar-thin"></div>
+      </div>
+
+      <div class="lg:col-span-7 glass-panel rounded-3xl p-5 space-y-4">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="message-circle" class="w-5 h-5 text-emerald-400"></i>
+          <span data-i18n="waComposerTitle">WhatsApp / WhatsApp Business મેસેજ મોકલો</span>
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1" data-i18n="waPhoneLabel">ફોન નંબર (દેશના કોડ સાથે, દા.ત. 91...)</label>
+            <input id="wa-phone" type="tel" placeholder="919876543210" class="w-full bg-slate-900/90 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-emerald-400 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1" data-i18n="waTemplateLabel">ઝડપી બિઝનેસ ટેમ્પલેટ</label>
+            <select id="wa-template" class="w-full bg-slate-900/90 border border-slate-700 rounded-2xl px-3 py-2.5 text-sm text-white focus:border-emerald-400 focus:outline-none">
+              <option value="">— ટેમ્પલેટ પસંદ કરો —</option>
+              <option value="નમસ્તે! તમારો ઓર્ડર તૈયાર થઈ ગયો છે. વધુ વિગત માટે કોલ કરશો.">ઓર્ડર તૈયાર (ગુજરાતી)</option>
+              <option value="નમસ્તે! આ મહિનાના બિલની બાકી રકમની યાદ અપાવવા માટે મેસેજ કર્યો છે. આભાર!">પેમેન્ટ રિમાઇન્ડર (ગુજરાતી)</option>
+              <option value="नमस्ते! आपका ऑर्डर तैयार है। कृपया जानकारी के लिए संपर्क करें।">ऑर्डर तैयार (हिन्दी)</option>
+              <option value="Hello! Thank you for contacting us. How can we assist you today?">Business Greeting (English)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-400 mb-1" data-i18n="waMsgLabel">મેસેજ</label>
+          <textarea id="wa-message" rows="4" placeholder="તમારો મેસેજ અહીં લખો..." class="w-full bg-slate-900/90 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-emerald-400 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" id="wa-send-btn" class="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-slate-950 font-bold text-sm flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition">
+            <i data-lucide="external-link" class="w-4 h-4"></i>
+            <span data-i18n="waOpenBtn">WhatsApp / Business માં ખોલો</span>
+          </button>
+          <button type="button" id="wa-ai-polish-btn" class="px-4 py-2.5 rounded-2xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-cyan-300 text-sm font-medium flex items-center gap-1.5 transition">
+            <i data-lucide="wand-2" class="w-4 h-4"></i>
+            <span data-i18n="waPolishBtn">અપેક્ષા AI થી પ્રોફેશનલ બનાવો</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: GOOGLE SHEETS & BUSINESS DATA -->
+    <section id="view-sheets" class="tab-view hidden space-y-5">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="glass-panel rounded-2xl p-4">
+          <div class="text-xs text-slate-400" data-i18n="kpiRecords">કુલ એન્ટ્રીઝ</div>
+          <div id="kpi-count" class="text-2xl font-extrabold text-white mt-1">0</div>
+        </div>
+        <div class="glass-panel rounded-2xl p-4">
+          <div class="text-xs text-slate-400" data-i18n="kpiTotalAmt">કુલ રકમ (₹)</div>
+          <div id="kpi-total" class="text-2xl font-extrabold text-cyan-300 mt-1">₹0</div>
+        </div>
+        <div class="glass-panel rounded-2xl p-4">
+          <div class="text-xs text-slate-400" data-i18n="kpiPending">બાકી (Pending)</div>
+          <div id="kpi-pending" class="text-2xl font-extrabold text-amber-300 mt-1">₹0</div>
+        </div>
+        <div class="glass-panel rounded-2xl p-4">
+          <div class="text-xs text-slate-400" data-i18n="kpiSource">ડેટા સોર્સ</div>
+          <div id="kpi-source" class="text-sm font-bold text-emerald-300 mt-2 truncate">સેમ્પલ ડેટા</div>
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2 flex-1 min-w-[220px]">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+          <input id="sheet-search" type="text" placeholder="પાર્ટીનું નામ, પ્રોડક્ટ કે સ્ટેટસ શોધો..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" id="sync-sheet-btn" class="px-3.5 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i> <span data-i18n="syncSheetBtn">Google Sheet સિંક કરો</span>
+          </button>
+          <label class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs sm:text-sm font-medium flex items-center gap-1.5 cursor-pointer transition">
+            <i data-lucide="upload" class="w-4 h-4"></i> <span>CSV ઇમ્પોર્ટ</span>
+            <input id="csv-upload" type="file" accept=".csv,.json" class="hidden" />
+          </label>
+          <button type="button" id="ask-ai-sheet-btn" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 text-slate-950 text-xs sm:text-sm font-bold flex items-center gap-1.5 transition">
+            <i data-lucide="sparkles" class="w-4 h-4"></i> <span data-i18n="askAiSheetBtn">અપેક્ષા સમરી બનાવો</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-3xl overflow-hidden">
+        <div class="overflow-x-auto scrollbar-thin">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead id="sheet-thead" class="bg-slate-950/80 text-slate-300 border-b border-slate-800"></thead>
+            <tbody id="sheet-tbody" class="divide-y divide-slate-800/70"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: PERSONAL MEMORY -->
+    <section id="view-memory" class="tab-view hidden grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div class="lg:col-span-5 glass-panel rounded-3xl p-5 space-y-4">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-cyan-400"></i>
+          <span data-i18n="addMemTitle">અપેક્ષાને નવી વાત યાદ રખાવો</span>
+        </h2>
+        <form id="memory-form" class="space-y-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">કેટેગરી</label>
+            <select id="mem-category" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+              <option value="બિઝનેસ">બિઝનેસ</option>
+              <option value="પર્સનલ">પર્સનલ</option>
+              <option value="કોન્ટેક્ટ">કોન્ટેક્ટ</option>
+              <option value="નિયમ">નિયમ / પસંદગી</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">વિગત (ગુજરાતી / હિન્દી / English)</label>
+            <textarea id="mem-text" rows="3" required placeholder="દા.ત. મારા મુખ્ય વેપારીનું નામ મહેશભાઈ છે અને તેમનો હિસાબ દર રવિવારે થાય છે." class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none"></textarea>
+          </div>
+          <button type="submit" class="w-full py-2.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-500 text-slate-950 font-bold text-sm transition">
+            મેમરીમાં સેવ કરો
+          </button>
+        </form>
+      </div>
+
+      <div class="lg:col-span-7 glass-panel rounded-3xl p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i data-lucide="brain" class="w-5 h-5 text-fuchsia-400"></i>
+            <span data-i18n="savedMemTitle">સેવ કરેલી મેમરી</span>
+          </h2>
+          <span id="mem-count-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30">0</span>
+        </div>
+        <div id="memory-list" class="space-y-2.5 max-h-[420px] overflow-y-auto scrollbar-thin"></div>
+      </div>
+    </section>
+
+    <!-- TAB 5: SETTINGS & HYBRID SETUP -->
+    <section id="view-settings" class="tab-view hidden max-w-3xl mx-auto space-y-5">
+      <div class="glass-panel rounded-3xl p-6 space-y-4">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="sliders" class="w-5 h-5 text-cyan-400"></i>
+          <span data-i18n="settingsTitle">અપેક્ષા AI સેટિંગ્સ & કનેક્શન</span>
+        </h2>
+
+        <form id="settings-form" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">તમારા AI નું નામ</label>
+              <input id="set-ai-name" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">વેક-વર્ડ (Wake Word)</label>
+              <input id="set-wake-word" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Google Gemini API Key (લાઇવ AI બ્રેઇન માટે — ફક્ત તમારા બ્રાઉઝરમાં સેવ થાય છે)</label>
+            <input id="set-gemini-key" type="password" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Google Sheets Apps Script Web App URL (https://script.google.com/...)</label>
+            <input id="set-sheet-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+          </div>
+
+          <div class="flex items-center justify-between pt-2">
+            <button type="button" id="reset-demo-btn" class="text-xs text-slate-400 hover:text-rose-400 transition">ડિફોલ્ટ રિસેટ કરો</button>
+            <button type="submit" class="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-500 text-slate-950 font-bold text-sm transition">
+              સેટિંગ્સ સેવ કરો
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="glass-panel rounded-3xl p-5 border-cyan-500/30">
+        <div class="flex items-start gap-3">
+          <div class="p-2.5 rounded-2xl bg-cyan-500/15 text-cyan-300 mt-0.5">
+            <i data-lucide="laptop" class="w-5 h-5"></i>
+          </div>
+          <div class="space-y-1.5 text-xs sm:text-sm text-slate-300">
+            <div class="font-bold text-white">Windows PC કંટ્રોલ અને Ollama ઓફલાઇન મોડ</div>
+            <p class="text-slate-400 leading-relaxed">
+              આ વેબ પ્રિવ્યુમાં તમે સીધું Gemini API, WhatsApp, Google Sheets અને વૉઇસ ચેટ વાપરી શકો છો.
+              તમારા Windows PC ની લોકલ એપ્સ, ફાઇલ્સ અને ઓફલાઇન Ollama ચલાવવા માટે સાથે આપેલ <strong class="text-cyan-300">personal_ai_kit.zip</strong> ડાઉનલોડ કરીને <code class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-200">start_ai.bat</code> રન કરો.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const Store = {
+      get(key, fallback) {
+        try {
+          const v = localStorage.getItem(key);
+          return v ? JSON.parse(v) : fallback;
+        } catch { return fallback; }
+      },
+      set(key, val) {
+        try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+      }
+    };
+
+    const I18N = {
+      gu: {
+        tabHub: 'વૉઇસ & ચેટ', tabWhatsApp: 'WhatsApp', tabSheets: 'ગૂગલ શીટ & ડેટા', tabMemory: 'મેમરી', tabSettings: 'સેટિંગ્સ',
+        orbTap: 'બોલવા માટે ટૅપ કરો', orbListening: 'અપેક્ષા સાંભળી રહી છે...', orbThinking: 'અપેક્ષા વિચારી રહી છે...',
+        orbHint: 'અપેક્ષા સાથે ગુજરાતી, હિન્દી કે English માં વાત કરો — બિઝનેસ ડેટા, WhatsApp મેસેજ કે PC કમાન્ડ આપો.',
+        pcDeckTitle: 'PC & બિઝનેસ ક્વિક એક્શન', quickCmdsTitle: 'ઝડપી કમાન્ડ્સ', chatTitle: 'અપેક્ષા AI કન્સોલ',
+        clearBtn: 'સાફ કરો', sendBtn: 'મોકલો', inputPlaceholder: 'અપેક્ષાને અહીં લખો અથવા માઇક પર ક્લિક કરો...',
+        demoMode: 'સ્માર્ટ ડેમો મોડ', liveMode: 'Gemini લાઇવ કનેક્ટેડ',
+        quickCmds: [
+          'આજનો બિઝનેસ ડેટા ચેક કરો',
+          'બાકી પેમેન્ટની યાદી બતાવો',
+          'WhatsApp પેમેન્ટ રિમાઇન્ડર બનાવો',
+          'યાદ રાખો: રવિવારે દુકાન બંધ રહેશે',
+          'PC માં Excel ખોલવાનો કમાન્ડ'
+        ],
+        welcome: 'નમસ્તે! હું અપેક્ષા (Apexa AI) છું — તમારું પર્સનલ AI આસિસ્ટન્ટ. ગુજરાતી, હિન્દી કે English માં બોલો અથવા લખો: હું તમારો બિઝનેસ ડેટા ચેક કરી શકું છું, WhatsApp/Business મેસેજ તૈયાર કરી શકું છું અને તમારી દરેક મહત્વની વાત યાદ રાખી શકું છું.'
+      },
+      hi: {
+        tabHub: 'वॉइस & चैट', tabWhatsApp: 'WhatsApp', tabSheets: 'गूगल शीट & डेटा', tabMemory: 'मेमोरी', tabSettings: 'सेटिंग्स',
+        orbTap: 'बोलने के लिए टैप करें', orbListening: 'अपेक्षा सुन रही है...', orbThinking: 'अपेक्षा सोच रही है...',
+        orbHint: 'अपेक्षा से गुजराती, हिंदी या English में बात करें — बिज़नेस डेटा, WhatsApp मैसेज या PC कमांड दें।',
+        pcDeckTitle: 'PC & बिज़नेस क्विक एक्शन', quickCmdsTitle: 'त्वरित कमांड्स', chatTitle: 'अपेक्षा AI कंसोल',
+        clearBtn: 'साफ़ करें', sendBtn: 'भेजें', inputPlaceholder: 'अपेक्षा को यहाँ लिखें या माइक पर क्लिक करें...',
+        demoMode: 'स्मार्ट डेमो मोड', liveMode: 'Gemini लाइव कनेक्टेड',
+        quickCmds: [
+          'आज का बिज़नेस डेटा चेक करें',
+          'पेंडिंग पेमेंट की लिस्ट दिखाएं',
+          'WhatsApp पेमेंट रिमाइंडर बनाएं',
+          'याद रखो: रविवार को ऑफिस बंद रहेगा',
+          'PC में Excel खोलने का कमांड'
+        ],
+        welcome: 'नमस्ते! मैं अपेक्षा (Apexa AI) हूँ — आपकी पर्सनल AI असिस्टेंट। गुजराती, हिंदी या English में बात करके बिज़नेस डेटा चेक करें, WhatsApp मैसेज भेजें और ज़रूरी बातें सेव करें।'
+      },
+      en: {
+        tabHub: 'Voice & Chat', tabWhatsApp: 'WhatsApp', tabSheets: 'Google Sheets', tabMemory: 'Memory', tabSettings: 'Settings',
+        orbTap: 'Tap to Speak', orbListening: 'Apexa is Listening...', orbThinking: 'Apexa is Thinking...',
+        orbHint: 'Talk to Apexa in Gujarati, Hindi, or English — check business sheets, draft WhatsApp messages, or run PC actions.',
+        pcDeckTitle: 'PC & Business Quick Actions', quickCmdsTitle: 'Quick Commands', chatTitle: 'Apexa AI Console',
+        clearBtn: 'Clear', sendBtn: 'Send', inputPlaceholder: 'Message Apexa or tap the voice core...',
+        demoMode: 'Smart Demo Mode', liveMode: 'Gemini Live Connected',
+        quickCmds: [
+          'Check business data summary',
+          'Show pending payments',
+          'Draft a WhatsApp payment reminder',
+          'Remember: Sunday is weekly off',
+          'Open Excel on Windows PC'
+        ],
+        welcome: 'Hello! I am Apexa AI — your personal assistant. Speak or type in Gujarati, Hindi, or English to check business sheets, send WhatsApp Business messages, and manage your memory.'
+      }
+    };
+
+    const SAMPLE_RECORDS = [
+      { Date: '2026-11-18', Party: 'પટેલ એગ્રો ટ્રેડર્સ', Product: 'ઘઉં ક્લીનિંગ બેચ A', Amount: 14500, Status: 'Paid' },
+      { Date: '2026-11-19', Party: 'શ્રીનાથ કિરાણા સ્ટોર', Product: 'ચા બ્લેન્ડ 25kg', Amount: 9200, Status: 'Pending' },
+      { Date: '2026-11-19', Party: 'કિસાન સીડ્સ સેન્ટર', Product: 'બિયારણ પેક (40 નંગ)', Amount: 18400, Status: 'Paid' },
+      { Date: '2026-11-20', Party: 'મહાદેવ ડેરી & ફાર્મ', Product: 'ફીડ & ગ્રેડિંગ', Amount: 6800, Status: 'Pending' }
+    ];
+
+    const SAMPLE_CONTACTS = [
+      { id: 'c1', name: 'પટેલ એગ્રો ટ્રેડર્સ (સેમ્પલ)', phone: '919800000001' },
+      { id: 'c2', name: 'શ્રીનાથ કિરાણા સ્ટોર (સેમ્પલ)', phone: '919800000002' }
+    ];
+
+    const storedSettings = Store.get('pai_settings_v2', {
+      aiName: 'અપેક્ષા AI',
+      wakeWord: 'હે અપેક્ષા',
+      geminiKey: '',
+      sheetUrl: ''
+    });
+
+    const state = {
+      lang: Store.get('pai_lang', 'gu'),
+      tab: 'hub',
+      ttsEnabled: Store.get('pai_tts', true),
+      godMode: Store.get('pai_godmode', true),
+      settings: storedSettings,
+      memories: Store.get('pai_memories', [
+        { id: 'm1', category: 'નિયમ', text: 'અપેક્ષાએ ગુજરાતી, હિન્દી અથવા અંગ્રેજીમાં સ્પષ્ટ અને સ્માર્ટ જવાબ આપવો.', ts: '2026-11-20' }
+      ]),
+      contacts: Store.get('pai_contacts', SAMPLE_CONTACTS),
+      sheetRows: Store.get('pai_sheets', SAMPLE_RECORDS),
+      sheetSource: Store.get('pai_sheet_source', 'સેમ્પલ ડેટા'),
+      chat: [],
+      isListening: false,
+      isThinking: false
+    };
+
+    let recognition = null;
+    let animFrameId = null;
+
+    // Neural Hologram Canvas Animation
+    function startNeuralCanvas() {
+      const canvas = document.getElementById('neural-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let angle = 0;
+
+      function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      function draw() {
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+        const cx = w / 2;
+        const cy = h / 2;
+        ctx.clearRect(0, 0, w, h);
+
+        const speed = state.isThinking ? 0.045 : state.isListening ? 0.032 : 0.012;
+        angle += speed;
+
+        const color = state.isListening
+          ? 'rgba(16, 185, 129, 0.55)'
+          : state.isThinking
+          ? 'rgba(192, 132, 252, 0.6)'
+          : 'rgba(34, 211, 238, 0.42)';
+
+        // Outer dashed HUD ring
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([12, 8]);
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.min(cx, cy) - 10, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // Inner counter-rotating ring
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(-angle * 1.4);
+        ctx.strokeStyle = state.godMode ? 'rgba(168, 85, 247, 0.45)' : 'rgba(56, 189, 248, 0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([4, 10]);
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.min(cx, cy) - 24, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // Orbiting neural nodes
+        for (let i = 0; i < 6; i++) {
+          const a = angle * 1.6 + (i * Math.PI) / 3;
+          const r = Math.min(cx, cy) - 17;
+          const x = cx + Math.cos(a) * r;
+          const y = cy + Math.sin(a) * r;
+          ctx.fillStyle = i % 2 === 0 ? '#22d3ee' : '#c084fc';
+          ctx.beginPath();
+          ctx.arc(x, y, state.isListening ? 3 : 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        animFrameId = requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    function updateClock() {
+      const el = document.getElementById('live-clock');
+      if (!el) return;
+      const now = new Date();
+      el.textContent = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function showToast(msg, type = 'info') {
+      const box = document.getElementById('toast-box');
+      const el = document.createElement('div');
+      const colors = type === 'error'
+        ? 'bg-rose-950/95 border-rose-500/50 text-rose-100'
+        : type === 'success'
+        ? 'bg-emerald-950/95 border-emerald-500/50 text-emerald-100'
+        : 'bg-slate-900/95 border-cyan-500/50 text-cyan-100';
+      el.className = `pointer-events-auto px-3.5 py-2.5 rounded-xl border text-xs font-medium shadow-xl transition ${colors}`;
+      el.textContent = msg;
+      box.appendChild(el);
+      setTimeout(() => { el.remove(); }, 3200);
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '').replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    }
+
+    function speakText(text) {
+      if (!state.ttsEnabled || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text.replace(/[*#_`]/g, ''));
+        u.lang = state.lang === 'gu' ? 'gu-IN' : state.lang === 'hi' ? 'hi-IN' : 'en-IN';
+        u.rate = 1.02;
+        window.speechSynthesis.speak(u);
+      } catch {}
+    }
+
+    function renderGodModeBtn() {
+      const btn = document.getElementById('godmode-toggle-btn');
+      const lbl = document.getElementById('godmode-label');
+      if (state.godMode) {
+        btn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border bg-fuchsia-500/20 text-fuchsia-200 border-fuchsia-500/50 shadow-sm shadow-fuchsia-500/20 transition';
+        lbl.textContent = 'Deep Think: ON';
+      } else {
+        btn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border bg-slate-900/90 text-slate-400 border-slate-700 transition';
+        lbl.textContent = 'Deep Think: OFF';
+      }
+    }
+
+    function renderLanguage() {
+      const t = I18N[state.lang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const k = el.getAttribute('data-i18n');
+        if (t[k]) el.textContent = t[k];
+      });
+      document.getElementById('chat-input').placeholder = t.inputPlaceholder;
+      document.getElementById('orb-hint').textContent = t.orbHint;
+      document.getElementById('orb-status-label').textContent = state.isListening ? t.orbListening : state.isThinking ? t.orbThinking : t.orbTap;
+
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        const active = btn.dataset.lang === state.lang;
+        btn.className = `lang-btn px-2.5 py-1 rounded-lg transition ${active ? 'bg-gradient-to-r from-cyan-400 to-indigo-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'}`;
+      });
+
+      const quickList = document.getElementById('quick-cmds-list');
+      quickList.innerHTML = '';
+      t.quickCmds.forEach(cmd => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'text-left text-xs px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-cyan-500/15 border border-slate-800 hover:border-cyan-500/40 text-slate-200 transition';
+        b.textContent = cmd;
+        b.addEventListener('click', () => handleUserQuery(cmd));
+        quickList.appendChild(b);
+      });
+
+      updateHeaderStatus();
+    }
+
+    function updateHeaderStatus() {
+      const t = I18N[state.lang];
+      const name = state.settings.aiName || 'અપેક્ષા AI';
+      document.getElementById('header-ai-name').textContent = name;
+      document.getElementById('wake-word-pill').textContent = `"${state.settings.wakeWord || 'હે અપેક્ષા'}"`;
+      document.getElementById('hud-mem-stat').textContent = state.memories.length;
+      document.getElementById('hud-sheet-stat').textContent = state.sheetRows.length;
+
+      const badge = document.getElementById('brain-badge');
+      const badgeText = document.getElementById('brain-badge-text');
+      if (state.settings.geminiKey && state.settings.geminiKey.trim().length > 10) {
+        badge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+        badge.firstElementChild.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
+        badgeText.textContent = t.liveMode;
+      } else {
+        badge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30';
+        badge.firstElementChild.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse';
+        badgeText.textContent = t.demoMode;
+      }
+    }
+
+    function switchTab(tab) {
+      state.tab = tab;
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+      document.getElementById(`view-${tab}`).classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        const active = btn.dataset.tab === tab;
+        btn.className = `tab-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition ${
+          active ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/40 shadow-sm shadow-cyan-500/15' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+        }`;
+      });
+    }
+
+    function renderChat() {
+      const box = document.getElementById('chat-messages');
+      box.innerHTML = '';
+      state.chat.forEach(m => {
+        const isUser = m.role === 'user';
+        const wrap = document.createElement('div');
+        wrap.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+        wrap.innerHTML = `
+          <div class="max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+            isUser
+              ? 'bg-gradient-to-r from-cyan-400 to-indigo-500 text-slate-950 font-semibold rounded-br-sm shadow-md shadow-cyan-500/15'
+              : 'bg-slate-900/90 border border-slate-800 text-slate-100 rounded-bl-sm'
+          }">
+            ${!isUser ? `<div class="text-[10px] font-bold uppercase tracking-wider text-cyan-400 mb-1">${escapeHtml(state.settings.aiName || 'અપેક્ષા AI')}${m.deep ? ' • Deep Think' : ''}</div>` : ''}
+            <div class="whitespace-pre-wrap">${escapeHtml(m.text)}</div>
+            ${m.actionHtml ? `<div class="mt-2.5 pt-2 border-t border-slate-800 flex flex-wrap gap-2">${m.actionHtml}</div>` : ''}
+          </div>
+        `;
+        box.appendChild(wrap);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function addChatMessage(role, text, actionHtml = '', deep = false) {
+      state.chat.push({ role, text, actionHtml, deep });
+      renderChat();
+    }
+
+    function getBusinessSummary() {
+      const rows = state.sheetRows || [];
+      let total = 0, pending = 0, pendingList = [];
+      rows.forEach(r => {
+        const amt = Number(r.Amount ?? r.amount ?? r['રકમ'] ?? 0) || 0;
+        total += amt;
+        const st = String(r.Status ?? r.status ?? r['સ્ટેટસ'] ?? '').toLowerCase();
+        if (st.includes('pend') || st.includes('બાકી') || st.includes('due')) {
+          pending += amt;
+          pendingList.push(`${r.Party || r.party || Object.values(r)[1] || 'Party'}: ₹${amt.toLocaleString('en-IN')}`);
+        }
+      });
+      return { count: rows.length, total, pending, pendingList };
+    }
+
+    async function askGeminiLive(userText) {
+      const key = state.settings.geminiKey.trim();
+      const summary = getBusinessSummary();
+      const memStr = state.memories.map(m => `- [${m.category}] ${m.text}`).join('\n');
+      const langName = state.lang === 'gu' ? 'Gujarati' : state.lang === 'hi' ? 'Hindi' : 'English';
+      const depthHint = state.godMode
+        ? 'Use deep analytical reasoning, anticipate follow-up business needs, and give structured, high-IQ actionable insights.'
+        : 'Keep replies ultra-short and direct.';
+
+      const systemPrompt = `You are ${state.settings.aiName} (Apexa), an ultra-modern JARVIS-style personal AI assistant. Reply clearly in ${langName} (or match the user's language across Gujarati, Hindi, and English). ${depthHint}
+User's saved memories:
+${memStr || 'None'}
+Current business sheet summary (${state.sheetSource}):
+Total entries: ${summary.count}, Total amount: ₹${summary.total}, Pending amount: ₹${summary.pending}.
+Pending items: ${summary.pendingList.join(', ') || 'None'}.
+If the user asks to send a WhatsApp message, write the ready message clearly. If they ask to open a Windows PC app/file, confirm the exact command for their local PC server.`;
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\nUser: ${userText}` }] }]
+        })
+      });
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      const data = await res.json();
+      return data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received.';
+    }
+
+    function runSmartLocalResponder(text) {
+      const q = text.toLowerCase();
+      const sum = getBusinessSummary();
+
+      if (q.includes('યાદ રાખ') || q.includes('याद रख') || q.startsWith('remember')) {
+        const clean = text.replace(/^(યાદ રાખો:?|યાદ રાખ:?|याद रखो:?|remember:?)/i, '').trim() || text;
+        state.memories.unshift({ id: 'm_' + Date.now(), category: 'પર્સનલ', text: clean, ts: new Date().toISOString().slice(0, 10) });
+        Store.set('pai_memories', state.memories);
+        renderMemories();
+        updateHeaderStatus();
+        return {
+          reply: state.lang === 'en'
+            ? `Saved to Apexa's memory: "${clean}"`
+            : state.lang === 'hi'
+            ? `अपेक्षा की मेमोरी में सेव हो गया है: "${clean}"`
+            : `અપેક્ષાની મેમરીમાં સેવ કરી દીધું છે: "${clean}"`
+        };
+      }
+
+      if (q.includes('ડેટા') || q.includes('બિઝનેસ') || q.includes('પેમેન્ટ') || q.includes('બાકી') || q.includes('शीट') || q.includes('डेटा') || q.includes('पेंडिंग') || q.includes('sheet') || q.includes('business') || q.includes('pending')) {
+        const listText = sum.pendingList.length ? sum.pendingList.join('\n• ') : 'કોઈ બાકી નથી';
+        const insight = state.godMode && sum.total > 0
+          ? `\n\n⚡ અપેક્ષા સ્માર્ટ સૂચન: કુલ રકમના ${Math.round((sum.pending / sum.total) * 100)}% બાકી છે — તમે નીચેના WhatsApp ટેબમાંથી તરત રિમાઇન્ડર મોકલી શકો છો.`
+          : '';
+        const reply = state.lang === 'en'
+          ? `Business Summary (${state.sheetSource}):\n• Total Entries: ${sum.count}\n• Total Amount: ₹${sum.total.toLocaleString('en-IN')}\n• Pending Amount: ₹${sum.pending.toLocaleString('en-IN')}\n\nPending Parties:\n• ${listText}`
+          : state.lang === 'hi'
+          ? `बिज़नेस सारांश (${state.sheetSource}):\n• कुल एंट्री: ${sum.count}\n• कुल राशि: ₹${sum.total.toLocaleString('en-IN')}\n• पेंडिंग राशि: ₹${sum.pending.toLocaleString('en-IN')}\n\nपेंडिंग पार्टी:\n• ${listText}`
+          : `બિઝનેસ ડેટા સમરી (${state.sheetSource}):\n• કુલ એન્ટ્રીઝ: ${sum.count}\n• કુલ રકમ: ₹${sum.total.toLocaleString('en-IN')}\n• બાકી (Pending): ₹${sum.pending.toLocaleString('en-IN')}\n\nબાકી પાર્ટીઓ:\n• ${listText}${insight}`;
+        return { reply };
+      }
+
+      if (q.includes('whatsapp') || q.includes('મેસેજ') || q.includes('मैसेज') || q.includes('રિમાઇન્ડર') || q.includes('रिमाइंडर')) {
+        const draft = state.lang === 'en'
+          ? 'Hello! This is a polite reminder regarding your pending invoice balance. Please share an update when convenient. Thank you!'
+          : state.lang === 'hi'
+          ? 'नमस्ते! आपके बकाया बिल के भुगतान की याद दिलाने के लिए यह संदेश भेजा है। कृपया सुविधा अनुसार अपडेट दें। धन्यवाद!'
+          : 'નમસ્તે! તમારા બાકી બિલના પેમેન્ટની યાદ અપાવવા માટે આ મેસેજ કર્યો છે. કૃપા કરીને અનુકૂળતાએ અપડેટ આપશો. આભાર!';
+        document.getElementById('wa-message').value = draft;
+        const waUrl = `https://wa.me/?text=${encodeURIComponent(draft)}`;
+        const actionHtml = `<a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs">WhatsApp માં ખોલો</a>`;
+        return {
+          reply: state.lang === 'en'
+            ? `Apexa drafted your WhatsApp Business message:\n"${draft}"`
+            : `અપેક્ષાએ તમારો WhatsApp Business મેસેજ તૈયાર કર્યો છે:\n"${draft}"`,
+          actionHtml
+        };
+      }
+
+      if (q.includes('excel') || q.includes('notepad') || q.includes('chrome') || q.includes('pc') || q.includes('ફાઇલ') || q.includes('એપ') || q.includes('open')) {
+        const actionName = q.includes('ફાઇલ') ? 'search_files' : 'open_app → Excel';
+        return {
+          reply: state.lang === 'en'
+            ? `PC Command Ready: [${actionName}]. Run start_ai.bat from personal_ai_kit.zip on your Windows PC so Apexa can control local apps and files.`
+            : `PC કમાન્ડ તૈયાર છે: [${actionName}]. તમારા Windows PC પર personal_ai_kit.zip માંથી start_ai.bat રન કરશો એટલે અપેક્ષા સીધી કમ્પ્યુટરની એપ્સ અને ફાઇલ્સ ચલાવી શકશે.`
+        };
+      }
+
+      return {
+        reply: state.lang === 'en'
+          ? `Got it! Apexa is in Smart Demo Mode right now. Add your Gemini API key in Settings to unlock live full-power AI conversations.`
+          : state.lang === 'hi'
+          ? `समझ गई! अपेक्षा अभी स्मार्ट डेमो मोड में है। लाइव फुल AI के लिए सेटिंग्स में अपनी Gemini API Key जोड़ें।`
+          : `સમજી ગઈ! અપેક્ષા અત્યારે સ્માર્ટ ડેમો મોડમાં છે. ફુલ લાઇવ AI માટે સેટિંગ્સમાં તમારી Gemini API Key ઉમેરો — અથવા ડાબી બાજુના ક્વિક એક્શન ટ્રાય કરો.`
+      };
+    }
+
+    async function handleUserQuery(text) {
+      const clean = text.trim();
+      if (!clean) return;
+      addChatMessage('user', clean);
+
+      state.isThinking = true;
+      const orb = document.getElementById('orb-btn');
+      const tBar = document.getElementById('thinking-bar');
+      orb.classList.add('orb-thinking');
+      tBar.classList.remove('hidden');
+      document.getElementById('orb-status-label').textContent = I18N[state.lang].orbThinking;
+
+      try {
+        let reply = '', actionHtml = '';
+        if (state.settings.geminiKey && state.settings.geminiKey.trim().length > 10) {
+          reply = await askGeminiLive(clean);
+        } else {
+          await new Promise(r => setTimeout(r, state.godMode ? 450 : 180));
+          const localRes = runSmartLocalResponder(clean);
+          reply = localRes.reply;
+          actionHtml = localRes.actionHtml || '';
+        }
+        addChatMessage('ai', reply, actionHtml, state.godMode);
+        speakText(reply);
+      } catch {
+        const fallback = runSmartLocalResponder(clean);
+        addChatMessage('ai', `${fallback.reply}\n\n(Note: Live Gemini API call failed — using local fallback.)`, fallback.actionHtml || '', false);
+        showToast('Gemini API કનેક્ટ ન થયું — લોકલ મોડ વપરાયું', 'error');
+      } finally {
+        state.isThinking = false;
+        orb.classList.remove('orb-thinking');
+        tBar.classList.add('hidden');
+        document.getElementById('orb-status-label').textContent = I18N[state.lang].orbTap;
+      }
+    }
+
+    function toggleVoice() {
+      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRec) {
+        showToast('આ બ્રાઉઝરમાં વૉઇસ રેકગ્નિશન સપોર્ટ નથી — કૃપા કરીને Chrome વાપરો અથવા ટાઇપ કરો.', 'error');
+        return;
+      }
+      if (state.isListening && recognition) {
+        recognition.stop();
+        return;
+      }
+      recognition = new SpeechRec();
+      recognition.lang = state.lang === 'gu' ? 'gu-IN' : state.lang === 'hi' ? 'hi-IN' : 'en-IN';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        state.isListening = true;
+        document.getElementById('orb-btn').classList.add('orb-listening');
+        document.getElementById('orb-status-label').textContent = I18N[state.lang].orbListening;
+      };
+      recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        handleUserQuery(transcript);
+      };
+      recognition.onerror = () => {
+        showToast('માઇક્રોફોન પરમિશન ચેક કરો અથવા ટેક્સ્ટમાં લખો.', 'error');
+      };
+      recognition.onend = () => {
+        state.isListening = false;
+        document.getElementById('orb-btn').classList.remove('orb-listening');
+        document.getElementById('orb-status-label').textContent = I18N[state.lang].orbTap;
+      };
+      recognition.start();
+    }
+
+    function renderContacts() {
+      const list = document.getElementById('contacts-list');
+      list.innerHTML = '';
+      state.contacts.forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-3 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/40 transition';
+        row.innerHTML = `
+          <button type="button" class="text-left flex-1 select-contact">
+            <div class="text-sm font-semibold text-white">${escapeHtml(c.name)}</div>
+            <div class="text-xs text-slate-400">+${escapeHtml(c.phone)}</div>
+          </button>
+          <button type="button" class="p-1.5 text-slate-500 hover:text-rose-400 del-contact" title="Delete">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        `;
+        row.querySelector('.select-contact').addEventListener('click', () => {
+          document.getElementById('wa-phone').value = c.phone;
+          showToast(`${c.name} પસંદ કર્યા`, 'success');
+        });
+        row.querySelector('.del-contact').addEventListener('click', () => {
+          state.contacts = state.contacts.filter(x => x.id !== c.id);
+          Store.set('pai_contacts', state.contacts);
+          renderContacts();
+        });
+        list.appendChild(row);
+      });
+      lucide.createIcons();
+    }
+
+    function renderSheets(filter = '') {
+      const rows = state.sheetRows || [];
+      const sum = getBusinessSummary();
+      document.getElementById('kpi-count').textContent = sum.count;
+      document.getElementById('kpi-total').textContent = `₹${sum.total.toLocaleString('en-IN')}`;
+      document.getElementById('kpi-pending').textContent = `₹${sum.pending.toLocaleString('en-IN')}`;
+      document.getElementById('kpi-source').textContent = state.sheetSource;
+      document.getElementById('hud-sheet-stat').textContent = sum.count;
+
+      const thead = document.getElementById('sheet-thead');
+      const tbody = document.getElementById('sheet-tbody');
+      if (!rows.length) {
+        thead.innerHTML = '';
+        tbody.innerHTML = '<tr><td class="p-6 text-center text-slate-400">કોઈ ડેટા નથી</td></tr>';
+        return;
+      }
+
+      const cols = Object.keys(rows[0]);
+      thead.innerHTML = `<tr>${cols.map(c => `<th class="px-4 py-3 font-semibold whitespace-nowrap">${escapeHtml(c)}</th>`).join('')}</tr>`;
+
+      const q = filter.trim().toLowerCase();
+      const filtered = q ? rows.filter(r => Object.values(r).some(v => String(v).toLowerCase().includes(q))) : rows;
+      tbody.innerHTML = filtered.map(r => `
+        <tr class="hover:bg-slate-800/40 transition">
+          ${cols.map(c => {
+            const val = r[c];
+            const low = String(val).toLowerCase();
+            if (c.toLowerCase() === 'status') {
+              const cls = low.includes('paid') ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+              return `<td class="px-4 py-3"><span class="px-2.5 py-0.5 rounded-full text-xs font-medium border ${cls}">${escapeHtml(val)}</span></td>`;
+            }
+            return `<td class="px-4 py-3 whitespace-nowrap text-slate-200">${escapeHtml(val)}</td>`;
+          }).join('')}
+        </tr>
+      `).join('');
+    }
+
+    function renderMemories() {
+      const list = document.getElementById('memory-list');
+      document.getElementById('mem-count-badge').textContent = state.memories.length;
+      document.getElementById('hud-mem-stat').textContent = state.memories.length;
+      if (!state.memories.length) {
+        list.innerHTML = '<div class="text-xs text-slate-400 p-4 text-center">હજી કોઈ મેમરી સેવ નથી.</div>';
+        return;
+      }
+      list.innerHTML = '';
+      state.memories.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-start justify-between gap-3';
+        card.innerHTML = `
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30">${escapeHtml(m.category)}</span>
+              <span class="text-[11px] text-slate-500">${escapeHtml(m.ts)}</span>
+            </div>
+            <p class="text-sm text-slate-200">${escapeHtml(m.text)}</p>
+          </div>
+          <button type="button" class="text-slate-500 hover:text-rose-400 del-mem">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        `;
+        card.querySelector('.del-mem').addEventListener('click', () => {
+          state.memories = state.memories.filter(x => x.id !== m.id);
+          Store.set('pai_memories', state.memories);
+          renderMemories();
+        });
+        list.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    function parseCSV(text) {
+      const lines = text.trim().split(/\r?\n/);
+      if (lines.length < 2) return [];
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      return lines.slice(1).map(line => {
+        const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = vals[i] ?? ''; });
+        return obj;
+      });
+    }
+
+    // Event Listeners
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.lang = btn.dataset.lang;
+        Store.set('pai_lang', state.lang);
+        renderLanguage();
+      });
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    document.querySelectorAll('.pc-quick-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleUserQuery(btn.dataset.pcCmd));
+    });
+
+    document.getElementById('godmode-toggle-btn').addEventListener('click', () => {
+      state.godMode = !state.godMode;
+      Store.set('pai_godmode', state.godMode);
+      renderGodModeBtn();
+      showToast(state.godMode ? 'Deep Think મોડ ચાલુ' : 'ફાસ્ટ મોડ ચાલુ', 'success');
+    });
+
+    document.getElementById('orb-btn').addEventListener('click', toggleVoice);
+
+    document.getElementById('tts-toggle-btn').addEventListener('click', () => {
+      state.ttsEnabled = !state.ttsEnabled;
+      Store.set('pai_tts', state.ttsEnabled);
+      document.getElementById('tts-toggle-btn').innerHTML = `<i data-lucide="${state.ttsEnabled ? 'volume-2' : 'volume-x'}" class="w-4 h-4"></i>`;
+      lucide.createIcons();
+      showToast(state.ttsEnabled ? 'વૉઇસ જવાબ ચાલુ' : 'વૉઇસ જવાબ બંધ');
+    });
+
+    document.getElementById('chat-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const val = input.value;
+      input.value = '';
+      handleUserQuery(val);
+    });
+
+    document.getElementById('clear-chat-btn').addEventListener('click', () => {
+      state.chat = [];
+      addChatMessage('ai', I18N[state.lang].welcome);
+    });
+
+    document.getElementById('toggle-add-contact').addEventListener('click', () => {
+      document.getElementById('add-contact-form').classList.toggle('hidden');
+    });
+    document.getElementById('cancel-add-contact').addEventListener('click', () => {
+      document.getElementById('add-contact-form').classList.add('hidden');
+    });
+    document.getElementById('add-contact-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('new-contact-name').value.trim();
+      const phone = document.getElementById('new-contact-phone').value.replace(/\D/g, '');
+      if (!name || !phone) return;
+      state.contacts.unshift({ id: 'c_' + Date.now(), name, phone });
+      Store.set('pai_contacts', state.contacts);
+      renderContacts();
+      e.target.reset();
+      document.getElementById('add-contact-form').classList.add('hidden');
+      showToast('કોન્ટેક્ટ સેવ થયો!', 'success');
+    });
+
+    document.getElementById('wa-template').addEventListener('change', (e) => {
+      if (e.target.value) document.getElementById('wa-message').value = e.target.value;
+    });
+
+    document.getElementById('wa-send-btn').addEventListener('click', () => {
+      const phone = document.getElementById('wa-phone').value.replace(/\D/g, '');
+      const msg = document.getElementById('wa-message').value.trim();
+      if (!msg) { showToast('પહેલા મેસેજ લખો', 'error'); return; }
+      const url = phone
+        ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+        : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    });
+
+    document.getElementById('wa-ai-polish-btn').addEventListener('click', async () => {
+      const box = document.getElementById('wa-message');
+      const raw = box.value.trim();
+      if (!raw) { showToast('પહેલા ટૂંકો મેસેજ લખો', 'error'); return; }
+      if (state.settings.geminiKey && state.settings.geminiKey.trim().length > 10) {
+        try {
+          showToast('અપેક્ષા મેસેજ સુધારી રહી છે...');
+          const polished = await askGeminiLive(`Rewrite this WhatsApp Business message politely and professionally in the same language without extra commentary: "${raw}"`);
+          box.value = polished.trim();
+          showToast('મેસેજ તૈયાર છે!', 'success');
+        } catch {
+          showToast('API ભૂલ — મેસેજ જેમનો તેમ રાખ્યો છે', 'error');
+        }
+      } else {
+        box.value = `નમસ્તે! ${raw}\n\nઆભાર!`;
+        showToast('પ્રોફેશનલ ફોર્મેટ ઉમેર્યું (ફુલ AI માટે Gemini Key ઉમેરો)', 'success');
+      }
+    });
+
+    document.getElementById('sheet-search').addEventListener('input', (e) => renderSheets(e.target.value));
+
+    document.getElementById('csv-upload').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = file.name.endsWith('.json') ? JSON.parse(reader.result) : parseCSV(reader.result);
+          if (Array.isArray(parsed) && parsed.length) {
+            state.sheetRows = parsed;
+            state.sheetSource = file.name;
+            Store.set('pai_sheets', state.sheetRows);
+            Store.set('pai_sheet_source', state.sheetSource);
+            renderSheets();
+            showToast(`${parsed.length} એન્ટ્રી ઇમ્પોર્ટ થઈ!`, 'success');
+          }
+        } catch {
+          showToast('ફાઇલ વાંચવામાં ભૂલ આવી', 'error');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('sync-sheet-btn').addEventListener('click', async () => {
+      const url = (state.settings.sheetUrl || '').trim();
+      if (!url || !url.startsWith('https://')) {
+        showToast('પહેલા સેટિંગ્સમાં Google Sheets Apps Script (https://) URL ઉમેરો', 'error');
+        switchTab('settings');
+        return;
+      }
+      try {
+        showToast('Google Sheet સિંક થઈ રહી છે...');
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : (data.rows || data.data || []);
+        if (!rows.length) throw new Error('Empty');
+        state.sheetRows = rows;
+        state.sheetSource = 'Live Google Sheet';
+        Store.set('pai_sheets', state.sheetRows);
+        Store.set('pai_sheet_source', state.sheetSource);
+        renderSheets();
+        showToast(`${rows.length} લાઇવ રો સિંક થઈ!`, 'success');
+      } catch {
+        showToast('Google Sheet સિંક ન થઈ શકી — Apps Script પબ્લિશ URL ચેક કરો', 'error');
+      }
+    });
+
+    document.getElementById('ask-ai-sheet-btn').addEventListener('click', () => {
+      switchTab('hub');
+      handleUserQuery(state.lang === 'en' ? 'Check business data summary' : 'આજનો બિઝનેસ ડેટા ચેક કરો');
+    });
+
+    document.getElementById('memory-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const category = document.getElementById('mem-category').value;
+      const text = document.getElementById('mem-text').value.trim();
+      if (!text) return;
+      state.memories.unshift({ id: 'm_' + Date.now(), category, text, ts: new Date().toISOString().slice(0, 10) });
+      Store.set('pai_memories', state.memories);
+      renderMemories();
+      e.target.reset();
+      showToast('અપેક્ષાની મેમરીમાં સેવ થયું!', 'success');
+    });
+
+    function loadSettingsForm() {
+      document.getElementById('set-ai-name').value = state.settings.aiName || 'અપેક્ષા AI';
+      document.getElementById('set-wake-word').value = state.settings.wakeWord || 'હે અપેક્ષા';
+      document.getElementById('set-gemini-key').value = state.settings.geminiKey || '';
+      document.getElementById('set-sheet-url').value = state.settings.sheetUrl || '';
+    }
+
+    document.getElementById('settings-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      state.settings = {
+        aiName: document.getElementById('set-ai-name').value.trim() || 'અપેક્ષા AI',
+        wakeWord: document.getElementById('set-wake-word').value.trim() || 'હે અપેક્ષા',
+        geminiKey: document.getElementById('set-gemini-key').value.trim(),
+        sheetUrl: document.getElementById('set-sheet-url').value.trim()
+      };
+      Store.set('pai_settings_v2', state.settings);
+      updateHeaderStatus();
+      showToast('સેટિંગ્સ સેવ થઈ ગયા!', 'success');
+    });
+
+    document.getElementById('reset-demo-btn').addEventListener('click', () => {
+      state.sheetRows = SAMPLE_RECORDS;
+      state.sheetSource = 'સેમ્પલ ડેટા';
+      Store.set('pai_sheets', state.sheetRows);
+      Store.set('pai_sheet_source', state.sheetSource);
+      renderSheets();
+      showToast('સેમ્પલ ડેટા રિસેટ થયો', 'info');
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      renderGodModeBtn();
+      renderLanguage();
+      switchTab('hub');
+      renderContacts();
+      renderSheets();
+      renderMemories();
+      loadSettingsForm();
+      addChatMessage('ai', I18N[state.lang].welcome);
+      startNeuralCanvas();
+      updateClock();
+      setInterval(updateClock, 1000);
+    });
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
