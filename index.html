@@ -460,26 +460,32 @@
             </div>
           </div>
 
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">AI API પ્રોવાઇડર પસંદ કરો</label>
+              <select id="set-ai-provider" class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none">
+                <option value="gemini">Google Gemini (AI Studio)</option>
+                <option value="groq">GroqCloud (Ultra-Fast Free)</option>
+                <option value="openrouter">OpenRouter (Free Models Router)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">AI મોડલ (Auto રાખવું શ્રેષ્ઠ છે)</label>
+              <select id="set-gemini-model" class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none">
+                <option value="auto">Auto (સ્માર્ટ ઓટો-ડિટેક્ટ)</option>
+              </select>
+            </div>
+          </div>
+
           <div class="space-y-2">
-            <label class="block text-xs text-slate-400">Google Gemini API Key (લાઇવ AI બ્રેઇન માટે — ફક્ત તમારા બ્રાઉઝરમાં સેવ થાય છે)</label>
+            <label id="api-key-label" class="block text-xs text-slate-400">API Key (ફક્ત તમારા બ્રાઉઝરમાં જ સેવ થાય છે)</label>
             <div class="flex flex-col sm:flex-row gap-2">
-              <input id="set-gemini-key" type="password" placeholder="AIzaSy..." class="flex-1 bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+              <input id="set-gemini-key" type="password" placeholder="AIzaSy... / gsk_... / sk-or-..." class="flex-1 bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none" />
               <button type="button" id="test-gemini-btn" class="px-4 py-2.5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm font-semibold whitespace-nowrap transition">
                 API Key ટેસ્ટ કરો
               </button>
             </div>
             <div id="api-test-result" class="hidden text-xs rounded-xl px-3 py-2 border"></div>
-          </div>
-
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Gemini મોડલ (Auto રાખશો તો ચાલતું મોડલ આપમેળે પસંદ થશે)</label>
-            <select id="set-gemini-model" class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none">
-              <option value="auto">Auto (સ્માર્ટ ઓટો-ડિટેક્ટ — ભલામણ)</option>
-              <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-              <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
-              <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-            </select>
           </div>
 
           <div>
@@ -592,6 +598,7 @@
     const storedSettings = Store.get('pai_settings_v2', {
       aiName: 'અપેક્ષા AI',
       wakeWord: 'હે અપેક્ષા',
+      aiProvider: 'gemini',
       geminiKey: '',
       geminiModel: 'auto',
       sheetUrl: ''
@@ -780,9 +787,11 @@
       const badge = document.getElementById('brain-badge');
       const badgeText = document.getElementById('brain-badge-text');
       if (state.settings.geminiKey && state.settings.geminiKey.trim().length > 10) {
+        const provMap = { gemini: 'Gemini', groq: 'Groq', openrouter: 'OpenRouter' };
+        const pName = provMap[state.settings.aiProvider || 'gemini'] || 'AI';
         badge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
         badge.firstElementChild.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
-        badgeText.textContent = t.liveMode;
+        badgeText.textContent = `${pName} લાઇવ`;
       } else {
         badge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30';
         badge.firstElementChild.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse';
@@ -885,9 +894,39 @@
       }
     }
 
+    async function callOpenAICompatible(endpoint, key, modelName, systemPrompt, userText, extraHeaders = {}) {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`,
+          ...extraHeaders
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userText }
+          ],
+          temperature: state.godMode ? 0.6 : 0.4
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data?.error?.message || `HTTP ${res.status}`;
+        const err = new Error(msg);
+        err.status = res.status;
+        throw err;
+      }
+      const reply = data?.choices?.[0]?.message?.content;
+      if (!reply) throw new Error('Empty response from AI provider');
+      return { reply, model: data?.model || modelName };
+    }
+
     async function askGeminiLive(userText) {
       const key = cleanApiKey(state.settings.geminiKey);
       if (!key) throw new Error('API Key ખાલી છે');
+      const provider = state.settings.aiProvider || 'gemini';
       const summary = getBusinessSummary();
       const memStr = state.memories.map(m => `- [${m.category}] ${m.text}`).join('\n');
       const langName = state.lang === 'gu' ? 'Gujarati' : state.lang === 'hi' ? 'Hindi' : 'English';
@@ -895,17 +934,63 @@
         ? 'Use deep analytical reasoning, anticipate follow-up business needs, and give structured, high-IQ actionable insights.'
         : 'Keep replies ultra-short and direct.';
 
-      const promptText = `You are ${state.settings.aiName} (Apexa), an ultra-modern JARVIS-style personal AI assistant. Reply clearly in ${langName} (or match the user's language across Gujarati, Hindi, and English). ${depthHint}
+      const systemPrompt = `You are ${state.settings.aiName} (Apexa), an ultra-modern JARVIS-style personal AI assistant. Reply clearly in ${langName} (or match the user's language across Gujarati, Hindi, and English). ${depthHint}
 User's saved memories:
 ${memStr || 'None'}
 Current business sheet summary (${state.sheetSource}):
 Total entries: ${summary.count}, Total amount: ₹${summary.total}, Pending amount: ₹${summary.pending}.
 Pending items: ${summary.pendingList.join(', ') || 'None'}.
-If the user asks to send a WhatsApp message, write the ready message clearly. If they ask to open a Windows PC app/file, confirm the exact command for their local PC server.
-
-User: ${userText}`;
+If the user asks to send a WhatsApp message, write the ready message clearly. If they ask to open a Windows PC app/file, confirm the exact command for their local PC server.`;
 
       const selected = state.settings.geminiModel || 'auto';
+
+      // Provider 1: GroqCloud (Ultra-Fast OpenAI-Compatible)
+      if (provider === 'groq') {
+        const groqModels = selected === 'auto'
+          ? ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'qwen/qwen3-32b']
+          : [selected, 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
+        let lastErr = null;
+        for (const m of groqModels) {
+          try {
+            const out = await callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', key, m, systemPrompt, userText);
+            state.activeModel = `Groq: ${out.model}`;
+            return out.reply;
+          } catch (err) {
+            lastErr = err;
+            if (err.status === 401 || err.status === 403) throw err;
+          }
+        }
+        throw lastErr || new Error('Groq API કનેક્ટ ન થયું');
+      }
+
+      // Provider 2: OpenRouter (Free Models Router)
+      if (provider === 'openrouter') {
+        const orModels = selected === 'auto'
+          ? ['openrouter/free', 'google/gemma-3-27b-it:free', 'meta-llama/llama-3.3-70b-instruct:free']
+          : [selected, 'openrouter/free'];
+        let lastErr = null;
+        for (const m of orModels) {
+          try {
+            const out = await callOpenAICompatible(
+              'https://openrouter.ai/api/v1/chat/completions',
+              key,
+              m,
+              systemPrompt,
+              userText,
+              { 'X-Title': 'Apexa Personal AI' }
+            );
+            state.activeModel = `OpenRouter: ${out.model}`;
+            return out.reply;
+          } catch (err) {
+            lastErr = err;
+            if (err.status === 401 || err.status === 403) throw err;
+          }
+        }
+        throw lastErr || new Error('OpenRouter API કનેક્ટ ન થયું');
+      }
+
+      // Provider 3: Google Gemini (Default)
+      const promptText = `${systemPrompt}\n\nUser: ${userText}`;
       const candidates = selected === 'auto'
         ? ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite', 'gemini-1.5-flash']
         : [selected, 'gemini-2.5-flash', 'gemini-2.0-flash'];
@@ -914,23 +999,21 @@ User: ${userText}`;
       for (const m of candidates) {
         try {
           const out = await callSingleGeminiModel(key, m, promptText);
-          state.activeModel = out.model;
+          state.activeModel = `Gemini: ${out.model}`;
           return out.reply;
         } catch (err) {
           lastErr = err;
-          // If key itself is invalid or forbidden, stop trying other models
           if (err.status === 400 || err.status === 401 || err.status === 403) {
             throw err;
           }
         }
       }
 
-      // Dynamic discovery fallback if standard model names returned 404/429
       const discovered = await discoverAvailableGeminiModels(key);
       for (const m of discovered.slice(0, 3)) {
         try {
           const out = await callSingleGeminiModel(key, m, promptText);
-          state.activeModel = out.model;
+          state.activeModel = `Gemini: ${out.model}`;
           return out.reply;
         } catch (err) {
           lastErr = err;
@@ -1356,19 +1439,68 @@ User: ${userText}`;
       showToast('અપેક્ષાની મેમરીમાં સેવ થયું!', 'success');
     });
 
+    const PROVIDER_MODELS = {
+      gemini: [
+        { v: 'auto', l: 'Auto (સ્માર્ટ ઓટો-ડિટેક્ટ)' },
+        { v: 'gemini-2.5-flash', l: 'gemini-2.5-flash' },
+        { v: 'gemini-2.5-flash-lite', l: 'gemini-2.5-flash-lite' },
+        { v: 'gemini-2.0-flash', l: 'gemini-2.0-flash' },
+        { v: 'gemini-1.5-flash', l: 'gemini-1.5-flash' }
+      ],
+      groq: [
+        { v: 'auto', l: 'Auto (Llama 3.3 70B → 8B)' },
+        { v: 'llama-3.3-70b-versatile', l: 'llama-3.3-70b-versatile (શ્રેષ્ઠ)' },
+        { v: 'llama-3.1-8b-instant', l: 'llama-3.1-8b-instant (સુપર ફાસ્ટ)' },
+        { v: 'qwen/qwen3-32b', l: 'qwen/qwen3-32b' }
+      ],
+      openrouter: [
+        { v: 'auto', l: 'Auto (openrouter/free રાઉટર)' },
+        { v: 'openrouter/free', l: 'openrouter/free' },
+        { v: 'google/gemma-3-27b-it:free', l: 'google/gemma-3-27b-it:free' },
+        { v: 'meta-llama/llama-3.3-70b-instruct:free', l: 'meta-llama/llama-3.3-70b-instruct:free' }
+      ]
+    };
+
+    function populateModelsForProvider(provider, selectedModel = 'auto') {
+      const sel = document.getElementById('set-gemini-model');
+      const items = PROVIDER_MODELS[provider] || PROVIDER_MODELS.gemini;
+      sel.innerHTML = items.map(it => `<option value="${it.v}">${it.l}</option>`).join('');
+      sel.value = items.some(it => it.v === selectedModel) ? selectedModel : 'auto';
+
+      const lbl = document.getElementById('api-key-label');
+      const inp = document.getElementById('set-gemini-key');
+      if (provider === 'groq') {
+        lbl.textContent = 'GroqCloud API Key (console.groq.com/keys પરથી ફ્રી — gsk_...)';
+        inp.placeholder = 'gsk_...';
+      } else if (provider === 'openrouter') {
+        lbl.textContent = 'OpenRouter API Key (openrouter.ai પરથી ફ્રી — sk-or-...)';
+        inp.placeholder = 'sk-or-v1-...';
+      } else {
+        lbl.textContent = 'Google Gemini API Key (aistudio.google.com પરથી ફ્રી — AIzaSy...)';
+        inp.placeholder = 'AIzaSy...';
+      }
+    }
+
     function loadSettingsForm() {
+      const prov = state.settings.aiProvider || 'gemini';
       document.getElementById('set-ai-name').value = state.settings.aiName || 'અપેક્ષા AI';
       document.getElementById('set-wake-word').value = state.settings.wakeWord || 'હે અપેક્ષા';
+      document.getElementById('set-ai-provider').value = prov;
+      populateModelsForProvider(prov, state.settings.geminiModel || 'auto');
       document.getElementById('set-gemini-key').value = state.settings.geminiKey || '';
-      document.getElementById('set-gemini-model').value = state.settings.geminiModel || 'auto';
       document.getElementById('set-sheet-url').value = state.settings.sheetUrl || '';
     }
+
+    document.getElementById('set-ai-provider').addEventListener('change', (e) => {
+      populateModelsForProvider(e.target.value, 'auto');
+    });
 
     document.getElementById('settings-form').addEventListener('submit', (e) => {
       e.preventDefault();
       state.settings = {
         aiName: document.getElementById('set-ai-name').value.trim() || 'અપેક્ષા AI',
         wakeWord: document.getElementById('set-wake-word').value.trim() || 'હે અપેક્ષા',
+        aiProvider: document.getElementById('set-ai-provider').value || 'gemini',
         geminiKey: cleanApiKey(document.getElementById('set-gemini-key').value),
         geminiModel: document.getElementById('set-gemini-model').value || 'auto',
         sheetUrl: document.getElementById('set-sheet-url').value.trim()
@@ -1380,15 +1512,17 @@ User: ${userText}`;
 
     document.getElementById('test-gemini-btn').addEventListener('click', async () => {
       const box = document.getElementById('api-test-result');
+      const prov = document.getElementById('set-ai-provider').value || 'gemini';
       const key = cleanApiKey(document.getElementById('set-gemini-key').value);
       const modelPref = document.getElementById('set-gemini-model').value || 'auto';
       if (!key) {
         box.className = 'text-xs rounded-xl px-3 py-2 border bg-rose-950/80 border-rose-500/40 text-rose-200';
-        box.textContent = '❌ પહેલા Google AI Studio ની Gemini API Key પેસ્ટ કરો.';
+        box.textContent = '❌ પહેલા પસંદ કરેલ પ્રોવાઇડરની API Key પેસ્ટ કરો.';
         return;
       }
       box.className = 'text-xs rounded-xl px-3 py-2 border bg-slate-900 border-cyan-500/40 text-cyan-200';
-      box.textContent = '⏳ Gemini API Key ચેક થઈ રહી છે...';
+      box.textContent = '⏳ API Key ચેક થઈ રહી છે...';
+      state.settings.aiProvider = prov;
       state.settings.geminiKey = key;
       state.settings.geminiModel = modelPref;
       Store.set('pai_settings_v2', state.settings);
@@ -1397,11 +1531,11 @@ User: ${userText}`;
       try {
         const reply = await askGeminiLive('Reply in one short Gujarati line: હેલો, હું અપેક્ષા AI લાઇવ છું!');
         box.className = 'text-xs rounded-xl px-3 py-2 border bg-emerald-950/80 border-emerald-500/40 text-emerald-200';
-        box.textContent = `✅ સફળ! (${state.activeModel || 'Gemini'}) જવાબ: ${reply.slice(0, 120)}`;
-        showToast('Gemini API Key બરાબર ચાલે છે!', 'success');
+        box.textContent = `✅ સફળ! (${state.activeModel || prov}) જવાબ: ${reply.slice(0, 120)}`;
+        showToast('API Key બરાબર ચાલે છે!', 'success');
       } catch (err) {
         box.className = 'text-xs rounded-xl px-3 py-2 border bg-rose-950/80 border-rose-500/40 text-rose-200';
-        box.textContent = `❌ ભૂલ: ${err?.message || 'Connection failed'} — કૃપા કરીને aistudio.google.com પરથી નવી key ચેક કરો અથવા API restrictions (HTTP referrer) હટાવો.`;
+        box.textContent = `❌ ભૂલ: ${err?.message || 'Connection failed'} — કૃપા કરીને પસંદ કરેલ પ્રોવાઇડર અને API Key બરાબર છે કે નહીં તે ચેક કરો.`;
       }
     });
 
