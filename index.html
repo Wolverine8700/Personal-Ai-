@@ -460,9 +460,26 @@
             </div>
           </div>
 
+          <div class="space-y-2">
+            <label class="block text-xs text-slate-400">Google Gemini API Key (લાઇવ AI બ્રેઇન માટે — ફક્ત તમારા બ્રાઉઝરમાં સેવ થાય છે)</label>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input id="set-gemini-key" type="password" placeholder="AIzaSy..." class="flex-1 bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+              <button type="button" id="test-gemini-btn" class="px-4 py-2.5 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm font-semibold whitespace-nowrap transition">
+                API Key ટેસ્ટ કરો
+              </button>
+            </div>
+            <div id="api-test-result" class="hidden text-xs rounded-xl px-3 py-2 border"></div>
+          </div>
+
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Google Gemini API Key (લાઇવ AI બ્રેઇન માટે — ફક્ત તમારા બ્રાઉઝરમાં સેવ થાય છે)</label>
-            <input id="set-gemini-key" type="password" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+            <label class="block text-xs text-slate-400 mb-1">Gemini મોડલ (Auto રાખશો તો ચાલતું મોડલ આપમેળે પસંદ થશે)</label>
+            <select id="set-gemini-model" class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 focus:outline-none">
+              <option value="auto">Auto (સ્માર્ટ ઓટો-ડિટેક્ટ — ભલામણ)</option>
+              <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+              <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+              <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+            </select>
           </div>
 
           <div>
@@ -576,6 +593,7 @@
       aiName: 'અપેક્ષા AI',
       wakeWord: 'હે અપેક્ષા',
       geminiKey: '',
+      geminiModel: 'auto',
       sheetUrl: ''
     });
 
@@ -827,8 +845,49 @@
       return { count: rows.length, total, pending, pendingList };
     }
 
+    function cleanApiKey(raw) {
+      return String(raw || '').replace(/[\s"']/g, '').trim();
+    }
+
+    async function callSingleGeminiModel(key, modelName, promptText) {
+      const cleanModel = modelName.replace(/^models\//, '');
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cleanModel)}:generateContent?key=${encodeURIComponent(key)}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: promptText }] }]
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data?.error?.message || `HTTP ${res.status}`;
+        const err = new Error(msg);
+        err.status = res.status;
+        throw err;
+      }
+      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!reply) throw new Error('Empty response from Gemini');
+      return { reply, model: cleanModel };
+    }
+
+    async function discoverAvailableGeminiModels(key) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return (data.models || [])
+          .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+          .map(m => m.name.replace(/^models\//, ''))
+          .filter(n => n.includes('gemini'));
+      } catch {
+        return [];
+      }
+    }
+
     async function askGeminiLive(userText) {
-      const key = state.settings.geminiKey.trim();
+      const key = cleanApiKey(state.settings.geminiKey);
+      if (!key) throw new Error('API Key ખાલી છે');
       const summary = getBusinessSummary();
       const memStr = state.memories.map(m => `- [${m.category}] ${m.text}`).join('\n');
       const langName = state.lang === 'gu' ? 'Gujarati' : state.lang === 'hi' ? 'Hindi' : 'English';
@@ -836,25 +895,49 @@
         ? 'Use deep analytical reasoning, anticipate follow-up business needs, and give structured, high-IQ actionable insights.'
         : 'Keep replies ultra-short and direct.';
 
-      const systemPrompt = `You are ${state.settings.aiName} (Apexa), an ultra-modern JARVIS-style personal AI assistant. Reply clearly in ${langName} (or match the user's language across Gujarati, Hindi, and English). ${depthHint}
+      const promptText = `You are ${state.settings.aiName} (Apexa), an ultra-modern JARVIS-style personal AI assistant. Reply clearly in ${langName} (or match the user's language across Gujarati, Hindi, and English). ${depthHint}
 User's saved memories:
 ${memStr || 'None'}
 Current business sheet summary (${state.sheetSource}):
 Total entries: ${summary.count}, Total amount: ₹${summary.total}, Pending amount: ₹${summary.pending}.
 Pending items: ${summary.pendingList.join(', ') || 'None'}.
-If the user asks to send a WhatsApp message, write the ready message clearly. If they ask to open a Windows PC app/file, confirm the exact command for their local PC server.`;
+If the user asks to send a WhatsApp message, write the ready message clearly. If they ask to open a Windows PC app/file, confirm the exact command for their local PC server.
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\nUser: ${userText}` }] }]
-        })
-      });
-      if (!res.ok) throw new Error(`API ${res.status}`);
-      const data = await res.json();
-      return data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received.';
+User: ${userText}`;
+
+      const selected = state.settings.geminiModel || 'auto';
+      const candidates = selected === 'auto'
+        ? ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite', 'gemini-1.5-flash']
+        : [selected, 'gemini-2.5-flash', 'gemini-2.0-flash'];
+
+      let lastErr = null;
+      for (const m of candidates) {
+        try {
+          const out = await callSingleGeminiModel(key, m, promptText);
+          state.activeModel = out.model;
+          return out.reply;
+        } catch (err) {
+          lastErr = err;
+          // If key itself is invalid or forbidden, stop trying other models
+          if (err.status === 400 || err.status === 401 || err.status === 403) {
+            throw err;
+          }
+        }
+      }
+
+      // Dynamic discovery fallback if standard model names returned 404/429
+      const discovered = await discoverAvailableGeminiModels(key);
+      for (const m of discovered.slice(0, 3)) {
+        try {
+          const out = await callSingleGeminiModel(key, m, promptText);
+          state.activeModel = out.model;
+          return out.reply;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+
+      throw lastErr || new Error('Gemini API કનેક્ટ ન થયું');
     }
 
     function runSmartLocalResponder(text) {
@@ -948,10 +1031,11 @@ If the user asks to send a WhatsApp message, write the ready message clearly. If
         }
         addChatMessage('ai', reply, actionHtml, state.godMode);
         speakText(reply);
-      } catch {
+      } catch (err) {
         const fallback = runSmartLocalResponder(clean);
-        addChatMessage('ai', `${fallback.reply}\n\n(Note: Live Gemini API call failed — using local fallback.)`, fallback.actionHtml || '', false);
-        showToast('Gemini API કનેક્ટ ન થયું — લોકલ મોડ વપરાયું', 'error');
+        const reason = err?.message || 'Unknown error';
+        addChatMessage('ai', `${fallback.reply}\n\n⚠️ Gemini API ભૂલ: ${reason}\n(સેટિંગ્સમાં "API Key ટેસ્ટ કરો" બટન પર ક્લિક કરીને ચેક કરો.)`, fallback.actionHtml || '', false);
+        showToast(`Gemini ભૂલ: ${reason.slice(0, 60)}`, 'error');
       } finally {
         state.isThinking = false;
         orb.classList.remove('orb-thinking');
@@ -1276,6 +1360,7 @@ If the user asks to send a WhatsApp message, write the ready message clearly. If
       document.getElementById('set-ai-name').value = state.settings.aiName || 'અપેક્ષા AI';
       document.getElementById('set-wake-word').value = state.settings.wakeWord || 'હે અપેક્ષા';
       document.getElementById('set-gemini-key').value = state.settings.geminiKey || '';
+      document.getElementById('set-gemini-model').value = state.settings.geminiModel || 'auto';
       document.getElementById('set-sheet-url').value = state.settings.sheetUrl || '';
     }
 
@@ -1284,12 +1369,40 @@ If the user asks to send a WhatsApp message, write the ready message clearly. If
       state.settings = {
         aiName: document.getElementById('set-ai-name').value.trim() || 'અપેક્ષા AI',
         wakeWord: document.getElementById('set-wake-word').value.trim() || 'હે અપેક્ષા',
-        geminiKey: document.getElementById('set-gemini-key').value.trim(),
+        geminiKey: cleanApiKey(document.getElementById('set-gemini-key').value),
+        geminiModel: document.getElementById('set-gemini-model').value || 'auto',
         sheetUrl: document.getElementById('set-sheet-url').value.trim()
       };
       Store.set('pai_settings_v2', state.settings);
       updateHeaderStatus();
       showToast('સેટિંગ્સ સેવ થઈ ગયા!', 'success');
+    });
+
+    document.getElementById('test-gemini-btn').addEventListener('click', async () => {
+      const box = document.getElementById('api-test-result');
+      const key = cleanApiKey(document.getElementById('set-gemini-key').value);
+      const modelPref = document.getElementById('set-gemini-model').value || 'auto';
+      if (!key) {
+        box.className = 'text-xs rounded-xl px-3 py-2 border bg-rose-950/80 border-rose-500/40 text-rose-200';
+        box.textContent = '❌ પહેલા Google AI Studio ની Gemini API Key પેસ્ટ કરો.';
+        return;
+      }
+      box.className = 'text-xs rounded-xl px-3 py-2 border bg-slate-900 border-cyan-500/40 text-cyan-200';
+      box.textContent = '⏳ Gemini API Key ચેક થઈ રહી છે...';
+      state.settings.geminiKey = key;
+      state.settings.geminiModel = modelPref;
+      Store.set('pai_settings_v2', state.settings);
+      updateHeaderStatus();
+
+      try {
+        const reply = await askGeminiLive('Reply in one short Gujarati line: હેલો, હું અપેક્ષા AI લાઇવ છું!');
+        box.className = 'text-xs rounded-xl px-3 py-2 border bg-emerald-950/80 border-emerald-500/40 text-emerald-200';
+        box.textContent = `✅ સફળ! (${state.activeModel || 'Gemini'}) જવાબ: ${reply.slice(0, 120)}`;
+        showToast('Gemini API Key બરાબર ચાલે છે!', 'success');
+      } catch (err) {
+        box.className = 'text-xs rounded-xl px-3 py-2 border bg-rose-950/80 border-rose-500/40 text-rose-200';
+        box.textContent = `❌ ભૂલ: ${err?.message || 'Connection failed'} — કૃપા કરીને aistudio.google.com પરથી નવી key ચેક કરો અથવા API restrictions (HTTP referrer) હટાવો.`;
+      }
     });
 
     document.getElementById('reset-demo-btn').addEventListener('click', () => {
